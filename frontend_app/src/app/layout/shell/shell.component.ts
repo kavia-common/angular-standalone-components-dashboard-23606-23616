@@ -5,8 +5,10 @@ import { filter } from 'rxjs';
 
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
 
 import { UiStoreService } from '../../core/state/ui-store.service';
+import { AuthService, AuthUser } from '../../core/auth/auth.service';
 
 type NavItem = {
   label: string;
@@ -19,7 +21,7 @@ type NavItem = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToolbarModule, ButtonModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToolbarModule, ButtonModule, MenuModule],
   template: `
     <div class="min-h-screen bg-[var(--ocean-bg)]">
       <p-toolbar class="border-0 bg-[var(--ocean-surface)] shadow-soft">
@@ -56,6 +58,50 @@ type NavItem = {
           >
             PrimeNG
           </a>
+
+          <!-- User menu -->
+          <ng-container *ngIf="user$ | async as user; else loggedOut">
+            <div class="relative">
+              <button
+                pButton
+                type="button"
+                class="p-button-text"
+                (click)="userMenu.toggle($event)"
+                aria-label="Open user menu"
+                data-testid="user-menu-button"
+              >
+                <span class="flex items-center gap-2">
+                  <span
+                    class="h-8 w-8 rounded-xl bg-[var(--ocean-primary)]/15 flex items-center justify-center text-[var(--ocean-primary)] font-semibold"
+                    aria-hidden="true"
+                  >
+                    {{ initials(user) }}
+                  </span>
+                  <span class="hidden sm:flex flex-col items-start leading-tight">
+                    <span class="text-sm font-semibold text-gray-900">{{ user.name }}</span>
+                    <span class="text-xs text-gray-500">{{ user.email || 'Signed in' }}</span>
+                  </span>
+                  <i class="pi pi-angle-down text-xs text-gray-500" aria-hidden="true"></i>
+                </span>
+              </button>
+
+              <p-menu #userMenu [popup]="true" [model]="userMenuItems"></p-menu>
+            </div>
+          </ng-container>
+
+          <ng-template #loggedOut>
+            <a routerLink="/login" data-testid="nav-login-top">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-sign-in"
+                label="Login"
+                class="p-button-outlined"
+                aria-label="Open login"
+                [style.borderColor]="'color-mix(in srgb, var(--ocean-primary) 30%, white)'"
+              ></button>
+            </a>
+          </ng-template>
 
           <a routerLink="/settings" data-testid="nav-settings-top">
             <button
@@ -96,6 +142,19 @@ type NavItem = {
               </a>
 
               <div class="mt-3 px-3 py-2 text-xs font-semibold text-gray-500">Quick actions</div>
+
+              <a *ngIf="!(isAuthed$ | async)" routerLink="/login" class="block px-1 pb-1" data-testid="quick-login">
+                <button
+                  pButton
+                  type="button"
+                  label="Sign in"
+                  icon="pi pi-sign-in"
+                  class="w-full p-button-outlined"
+                  aria-label="Sign in"
+                  [style.borderColor]="'color-mix(in srgb, var(--ocean-primary) 30%, white)'"
+                ></button>
+              </a>
+
               <a routerLink="/settings" class="block px-1 pb-1" data-testid="quick-settings">
                 <button
                   pButton
@@ -132,8 +191,25 @@ type NavItem = {
 export class ShellComponent {
   protected readonly ui = inject(UiStoreService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   protected readonly sidebarOpen = this.ui.sidebarOpen$;
+
+  protected readonly isAuthed$ = this.auth.isAuthenticated$;
+  protected readonly user$ = this.auth.user$;
+
+  protected readonly userMenuItems = [
+    {
+      label: 'Account',
+      items: [
+        {
+          label: 'Logout',
+          icon: 'pi pi-sign-out',
+          command: () => this.onLogout(),
+        },
+      ],
+    },
+  ];
 
   protected readonly nav: NavItem[] = [
     { label: 'Home', icon: 'pi-home', route: '/', exact: true, testId: 'nav-home' },
@@ -146,5 +222,17 @@ export class ShellComponent {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => this.ui.setActiveRoute(e.urlAfterRedirects));
+  }
+
+  protected initials(user: AuthUser): string {
+    const parts = (user.name ?? '').trim().split(/\s+/).filter(Boolean);
+    const first = parts[0]?.[0] ?? 'U';
+    const second = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+    return (first + second).toUpperCase();
+  }
+
+  private onLogout(): void {
+    this.auth.logout();
+    void this.router.navigate(['/']);
   }
 }
