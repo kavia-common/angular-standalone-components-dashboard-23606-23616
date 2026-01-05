@@ -13,6 +13,7 @@ type NavItem = {
   icon: string;
   route: string;
   exact?: boolean;
+  testId?: string;
 };
 
 @Component({
@@ -30,11 +31,12 @@ type NavItem = {
             icon="pi pi-bars"
             (click)="ui.toggleSidebar()"
             aria-label="Toggle sidebar"
+            data-testid="sidebar-toggle"
           ></button>
 
           <div class="flex items-center gap-3">
             <div class="h-9 w-9 rounded-2xl bg-[var(--ocean-primary)]/15 flex items-center justify-center">
-              <i class="pi pi-compass text-[var(--ocean-primary)]"></i>
+              <i class="pi pi-compass text-[var(--ocean-primary)]" aria-hidden="true"></i>
             </div>
             <div class="leading-tight">
               <div class="text-sm font-semibold text-gray-900">Ocean Professional</div>
@@ -49,11 +51,13 @@ type NavItem = {
             href="https://primeng.org/"
             target="_blank"
             rel="noreferrer"
+            aria-label="Open PrimeNG documentation"
+            data-testid="nav-primeng"
           >
             PrimeNG
           </a>
 
-          <a routerLink="/settings">
+          <a routerLink="/settings" data-testid="nav-settings-top">
             <button
               pButton
               type="button"
@@ -74,7 +78,7 @@ type NavItem = {
             [class.hidden]="!(sidebarOpen | async)"
             [class.lg:block]="true"
           >
-            <nav class="p-3">
+            <nav class="p-3" aria-label="Primary navigation" data-testid="sidebar-nav">
               <div class="px-3 py-2 text-xs font-semibold text-gray-500">Navigation</div>
 
               <a
@@ -83,26 +87,29 @@ type NavItem = {
                 [routerLink]="item.route"
                 routerLinkActive="bg-[color-mix(in_srgb,var(--ocean-primary)_10%,white)] text-[var(--ocean-primary)]"
                 [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                [attr.data-testid]="item.testId"
+                [attr.aria-label]="'Go to ' + item.label"
               >
-                <i class="pi" [ngClass]="item.icon"></i>
+                <i class="pi" [ngClass]="item.icon" aria-hidden="true"></i>
                 <span class="flex-1">{{ item.label }}</span>
-                <i class="pi pi-angle-right text-xs text-gray-400 group-hover:text-gray-600"></i>
+                <i class="pi pi-angle-right text-xs text-gray-400 group-hover:text-gray-600" aria-hidden="true"></i>
               </a>
 
               <div class="mt-3 px-3 py-2 text-xs font-semibold text-gray-500">Quick actions</div>
-              <a routerLink="/settings" class="block px-1 pb-1">
+              <a routerLink="/settings" class="block px-1 pb-1" data-testid="quick-settings">
                 <button
                   pButton
                   type="button"
                   label="Configure environment"
                   icon="pi pi-sliders-h"
                   class="w-full p-button"
+                  aria-label="Configure environment"
                   [style.background]="'var(--ocean-primary)'"
                   [style.borderColor]="'var(--ocean-primary)'"
                 ></button>
               </a>
 
-              <div class="mt-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-gray-50 p-3">
+              <div class="mt-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-gray-50 p-3" data-testid="sidebar-tip">
                 <div class="text-xs font-semibold text-gray-700">Tip</div>
                 <div class="mt-1 text-xs text-gray-600">
                   Set <span class="font-mono">NG_APP_API_BASE</span> to enable live health/activity cards.
@@ -129,8 +136,9 @@ export class ShellComponent {
   protected readonly sidebarOpen = this.ui.sidebarOpen$;
 
   protected readonly nav: NavItem[] = [
-    { label: 'Home', icon: 'pi-home', route: '/', exact: true },
-    { label: 'Settings', icon: 'pi-cog', route: '/settings', exact: true },
+    { label: 'Home', icon: 'pi-home', route: '/', exact: true, testId: 'nav-home' },
+    { label: 'Data', icon: 'pi-table', route: '/data', exact: true, testId: 'nav-data' },
+    { label: 'Settings', icon: 'pi-cog', route: '/settings', exact: true, testId: 'nav-settings' },
   ];
 
   constructor() {
