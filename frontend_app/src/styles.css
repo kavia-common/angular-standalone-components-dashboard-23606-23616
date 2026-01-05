@@ -22,8 +22,26 @@ body {
     "Segoe UI Emoji";
 }
 
+/* Ensure images/inputs behave consistently across PrimeNG + Tailwind */
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
 /* Make focus rings consistent */
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ocean-primary) 65%, white);
   outline-offset: 2px;
+}
+
+/* PrimeNG small visual polish without overriding theme tokens */
+.p-card .p-card-title {
+  font-weight: 650;
+}
+
+.p-card .p-card-subtitle {
+  color: rgb(107 114 128); /* gray-500 */
 }
